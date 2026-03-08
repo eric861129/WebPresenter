@@ -12,9 +12,9 @@ export function DeckShell() {
     { to: "/remote", label: t("shell.nav.remote") },
   ];
 
-  if (location.pathname === "/audience") {
+  if (location.pathname === "/audience" || location.pathname === "/remote") {
     return (
-      <main className="audience-shell">
+      <main className={location.pathname === "/remote" ? "remote-shell" : "audience-shell"}>
         <Outlet />
       </main>
     );

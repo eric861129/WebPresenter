@@ -6,6 +6,26 @@ import { parsePptxFile } from "../services/pptxLoader";
 async function buildSamplePptx() {
   const zip = new JSZip();
   zip.file(
+    "ppt/theme/theme1.xml",
+    `<?xml version="1.0" encoding="UTF-8"?>
+      <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <a:themeElements>
+          <a:clrScheme name="Office">
+            <a:dk1><a:srgbClr val="111111" /></a:dk1>
+            <a:lt1><a:srgbClr val="FFFFFF" /></a:lt1>
+            <a:accent1><a:srgbClr val="4472C4" /></a:accent1>
+          </a:clrScheme>
+        </a:themeElements>
+      </a:theme>`,
+  );
+  zip.file(
+    "ppt/slideMasters/slideMaster1.xml",
+    `<?xml version="1.0" encoding="UTF-8"?>
+      <p:sldMaster xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+        <p:clrMap bg1="lt1" tx1="dk1" bg2="lt1" tx2="dk1" accent1="accent1" accent2="accent1" accent3="accent1" accent4="accent1" accent5="accent1" accent6="accent1" />
+      </p:sldMaster>`,
+  );
+  zip.file(
     "ppt/presentation.xml",
     `<?xml version="1.0" encoding="UTF-8"?>
       <p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
@@ -29,7 +49,12 @@ async function buildSamplePptx() {
               </p:spPr>
               <p:txBody>
                 <a:p>
-                  <a:r><a:rPr sz="2400" /><a:t>Hello slide</a:t></a:r>
+                  <a:r>
+                    <a:rPr sz="2400">
+                      <a:solidFill><a:schemeClr val="tx1" /></a:solidFill>
+                    </a:rPr>
+                    <a:t>Hello slide</a:t>
+                  </a:r>
                 </a:p>
               </p:txBody>
             </p:sp>
@@ -73,6 +98,9 @@ describe("parsePptxFile", () => {
     expect(deck.totalSlides).toBe(1);
     expect(deck.slides[0].notes).toContain("Remember this point");
     expect(deck.slides[0].contentModel.kind).toBe("pptx");
+    expect(deck.slides[0].contentModel.kind === "pptx" && deck.slides[0].contentModel.elements[0].type === "text"
+      ? deck.slides[0].contentModel.elements[0].color
+      : null).toBe("#111111");
     expect(deck.warnings[0]).toContain("Charts");
   });
 });

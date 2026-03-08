@@ -82,8 +82,8 @@ export function RemotePage() {
   const session = syncState.session;
 
   return (
-    <section className="remote-layout">
-      <article className="panel remote-panel">
+    <section className="remote-screen">
+      <article className="remote-panel remote-single">
         <p className="eyebrow">{t("remote.eyebrow")}</p>
         <h2>{syncState.title || t("remote.waitingTitle")}</h2>
         <p className={connected ? "status-card success" : "status-card"}>
@@ -106,12 +106,11 @@ export function RemotePage() {
             {t("remote.toggleBlackout")}
           </button>
         </div>
-      </article>
-
-      <article className="panel notes-panel">
-        <p className="eyebrow">{t("remote.notesEyebrow")}</p>
-        <h3>{syncState.notes ? t("remote.notesTitle") : t("remote.notesEmptyTitle")}</h3>
-        <p>{syncState.notes ?? t("remote.notesEmptyBody")}</p>
+        <div className="notes-panel remote-notes">
+          <p className="eyebrow">{t("remote.notesEyebrow")}</p>
+          <h3>{syncState.notes ? t("remote.notesTitle") : t("remote.notesEmptyTitle")}</h3>
+          <p>{syncState.notes ?? t("remote.notesEmptyBody")}</p>
+        </div>
       </article>
     </section>
   );

@@ -148,6 +148,12 @@ button {
   min-height: 100vh;
 }
 
+.remote-shell {
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--surface-line);
@@ -175,6 +181,12 @@ button {
 
 .remote-layout {
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+}
+
+.remote-screen {
+  height: 100dvh;
+  padding: 12px;
+  overflow: hidden;
 }
 
 .hero-panel {
@@ -225,6 +237,16 @@ button {
 .notes-panel {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--surface-line);
+}
+
+.remote-single {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: calc(100dvh - 24px);
+  padding: 18px;
+  overflow: hidden;
+  background: rgba(8, 20, 28, 0.96);
 }
 
 .recent-card {
@@ -337,6 +359,11 @@ button {
 .notes-panel {
   padding: 18px;
   border-radius: 20px;
+}
+
+.remote-notes {
+  flex: 1;
+  overflow: auto;
 }
 
 .metric-card span {

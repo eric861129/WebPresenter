@@ -38,6 +38,8 @@ export function PresenterPage() {
   const syncRef = useRef<PresentationSyncChannel | null>(null);
   const remoteServerRef = useRef<PresenterRemoteServer | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
+  const deckRef = useRef<DeckDocument | null>(null);
+  const sessionRef = useRef<PresentationSession | null>(session);
 
   useEffect(() => {
     syncRef.current = new PresentationSyncChannel();
@@ -59,6 +61,7 @@ export function PresenterPage() {
       }
 
       setDeck(record.deck);
+      deckRef.current = record.deck;
       setSourceFile(record.file);
       setSession((currentSession) => currentSession ?? createSession(record.deck.id, "single"));
     }
@@ -67,6 +70,8 @@ export function PresenterPage() {
   }, [t]);
 
   useEffect(() => {
+    sessionRef.current = session;
+
     if (!session) {
       return;
     }
@@ -102,59 +107,94 @@ export function PresenterPage() {
   }, []);
 
   function goToSlide(index: number) {
-    if (!session || !deck) {
+    const currentDeck = deckRef.current;
+    if (!currentDeck) {
       return;
     }
 
-    const nextSession = {
-      ...session,
-      currentSlide: index,
-    };
+    setSession((currentSession) =>
+      currentSession
+        ? {
+            ...currentSession,
+            currentSlide: Math.max(0, Math.min(currentDeck.totalSlides - 1, index)),
+          }
+        : currentSession,
+    );
+  }
 
-    setSession(nextSession);
-    remoteServerRef.current?.broadcastState({
-      session: nextSession,
-      notes: deck.slides[index]?.notes,
-      totalSlides: deck.totalSlides,
-      title: deck.title,
-    });
+  function goToNextSlide() {
+    const currentDeck = deckRef.current;
+    if (!currentDeck) {
+      return;
+    }
+
+    setSession((currentSession) =>
+      currentSession
+        ? {
+            ...currentSession,
+            currentSlide: Math.min(currentDeck.totalSlides - 1, currentSession.currentSlide + 1),
+          }
+        : currentSession,
+    );
+  }
+
+  function goToPreviousSlide() {
+    setSession((currentSession) =>
+      currentSession
+        ? {
+            ...currentSession,
+            currentSlide: Math.max(0, currentSession.currentSlide - 1),
+          }
+        : currentSession,
+    );
+  }
+
+  function toggleBlackout() {
+    setSession((currentSession) =>
+      currentSession
+        ? {
+            ...currentSession,
+            blackout: !currentSession.blackout,
+          }
+        : currentSession,
+    );
   }
 
   function applyRemoteCommand(command: RemoteCommand) {
-    if (!deck || !session) {
+    const currentDeck = deckRef.current;
+    const currentSession = sessionRef.current;
+
+    if (!currentDeck || !currentSession) {
       return;
     }
 
     if (command.type === "SYNC_REQUEST") {
       remoteServerRef.current?.broadcastState({
-        session,
-        notes: deck.slides[session.currentSlide]?.notes,
-        totalSlides: deck.totalSlides,
-        title: deck.title,
+        session: currentSession,
+        notes: currentDeck.slides[currentSession.currentSlide]?.notes,
+        totalSlides: currentDeck.totalSlides,
+        title: currentDeck.title,
       });
       return;
     }
 
     if (command.type === "NEXT") {
-      goToSlide(Math.min(deck.totalSlides - 1, session.currentSlide + 1));
+      goToNextSlide();
       return;
     }
 
     if (command.type === "PREV") {
-      goToSlide(Math.max(0, session.currentSlide - 1));
+      goToPreviousSlide();
       return;
     }
 
     if (command.type === "GOTO") {
-      goToSlide(Math.max(0, Math.min(deck.totalSlides - 1, command.index)));
+      goToSlide(command.index);
       return;
     }
 
     if (command.type === "TOGGLE_BLACKOUT") {
-      setSession({
-        ...session,
-        blackout: !session.blackout,
-      });
+      toggleBlackout();
     }
   }
 
@@ -218,35 +258,26 @@ export function PresenterPage() {
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (!deck || !session) {
+      if (!deck || !sessionRef.current) {
         return;
       }
 
       if (event.key === "ArrowRight" || event.key === "PageDown") {
-        setSession({
-          ...session,
-          currentSlide: Math.min(deck.totalSlides - 1, session.currentSlide + 1),
-        });
+        goToNextSlide();
       }
 
       if (event.key === "ArrowLeft" || event.key === "PageUp") {
-        setSession({
-          ...session,
-          currentSlide: Math.max(0, session.currentSlide - 1),
-        });
+        goToPreviousSlide();
       }
 
       if (event.key.toLowerCase() === "b") {
-        setSession({
-          ...session,
-          blackout: !session.blackout,
-        });
+        toggleBlackout();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [deck, session]);
+  }, [deck]);
 
   useEffect(() => {
     if (!deck || !session) {
@@ -350,7 +381,7 @@ export function PresenterPage() {
             <button
               className="ghost-button"
               disabled={session.currentSlide === 0}
-              onClick={() => goToSlide(Math.max(0, session.currentSlide - 1))}
+              onClick={goToPreviousSlide}
               type="button"
             >
               {t("presenter.previous")}
@@ -358,19 +389,14 @@ export function PresenterPage() {
             <button
               className="ghost-button"
               disabled={session.currentSlide === deck.totalSlides - 1}
-              onClick={() => goToSlide(Math.min(deck.totalSlides - 1, session.currentSlide + 1))}
+              onClick={goToNextSlide}
               type="button"
             >
               {t("presenter.next")}
             </button>
             <button
               className={session.blackout ? "primary-button danger" : "ghost-button"}
-              onClick={() =>
-                setSession({
-                  ...session,
-                  blackout: !session.blackout,
-                })
-              }
+              onClick={toggleBlackout}
               type="button"
             >
               {session.blackout ? t("presenter.disableBlackout") : t("presenter.enableBlackout")}
