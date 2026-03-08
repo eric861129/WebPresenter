@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
 import { MobileRemoteClient } from "../services/remoteControl";
@@ -14,12 +15,13 @@ type SyncState = {
 };
 
 export function RemotePage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [connected, setConnected] = useState(false);
   const [syncState, setSyncState] = useState<SyncState>({
     session: null,
     totalSlides: 0,
-    title: "Waiting for presenter",
+    title: "",
   });
   const [gotoValue, setGotoValue] = useState("");
 
@@ -83,34 +85,34 @@ export function RemotePage() {
   return (
     <section className="remote-layout">
       <article className="panel remote-panel">
-        <p className="eyebrow">Mobile Remote</p>
-        <h2>{syncState.title}</h2>
+        <p className="eyebrow">{t("remote.eyebrow")}</p>
+        <h2>{syncState.title || t("remote.waitingTitle")}</h2>
         <p className={connected ? "status-card success" : "status-card"}>
-          {connected ? "Connected to presenter" : "Waiting for presenter connection"}
+          {connected ? t("remote.connected") : t("remote.waiting")}
         </p>
         <div className="metric-grid remote-metrics">
           <div className="metric-card">
-            <span>Slide</span>
+            <span>{t("remote.slide")}</span>
             <strong>{session ? `${session.currentSlide + 1}/${syncState.totalSlides}` : "--"}</strong>
           </div>
           <div className="metric-card">
-            <span>Blackout</span>
-            <strong>{session?.blackout ? "On" : "Off"}</strong>
+            <span>{t("remote.blackout")}</span>
+            <strong>{session?.blackout ? t("remote.blackoutOn") : t("remote.blackoutOff")}</strong>
           </div>
           <div className="metric-card">
-            <span>Status</span>
-            <strong>{connected ? "Live" : "Idle"}</strong>
+            <span>{t("remote.status")}</span>
+            <strong>{connected ? t("remote.live") : t("remote.idle")}</strong>
           </div>
         </div>
         <div className="remote-controls">
           <button className="ghost-button remote-button" onClick={() => send({ type: "PREV" })} type="button">
-            Previous
+            {t("remote.previous")}
           </button>
           <button className="primary-button remote-button" onClick={() => send({ type: "NEXT" })} type="button">
-            Next
+            {t("remote.next")}
           </button>
           <button className="ghost-button remote-button" onClick={() => send({ type: "TOGGLE_BLACKOUT" })} type="button">
-            Toggle blackout
+            {t("remote.toggleBlackout")}
           </button>
         </div>
         <form
@@ -127,19 +129,19 @@ export function RemotePage() {
             className="text-input"
             inputMode="numeric"
             onChange={(event) => setGotoValue(event.target.value)}
-            placeholder="Jump to slide #"
+            placeholder={t("remote.jumpPlaceholder")}
             value={gotoValue}
           />
           <button className="ghost-button" type="submit">
-            Go
+            {t("common.go")}
           </button>
         </form>
       </article>
 
       <article className="panel notes-panel">
-        <p className="eyebrow">Speaker Notes</p>
-        <h3>{syncState.notes ? "Current slide notes" : "No notes available"}</h3>
-        <p>{syncState.notes ?? "PDF decks do not expose notes in v1."}</p>
+        <p className="eyebrow">{t("remote.notesEyebrow")}</p>
+        <h3>{syncState.notes ? t("remote.notesTitle") : t("remote.notesEmptyTitle")}</h3>
+        <p>{syncState.notes ?? t("remote.notesEmptyBody")}</p>
       </article>
     </section>
   );

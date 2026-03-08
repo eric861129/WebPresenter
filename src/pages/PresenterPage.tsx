@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 import { RemoteQrModal } from "../components/RemoteQrModal";
@@ -23,10 +24,12 @@ function createSession(deckId: string, mode: PresentationMode): PresentationSess
 }
 
 export function PresenterPage() {
+  const { t } = useTranslation();
   const [deck, setDeck] = useState<DeckDocument | null>(null);
   const [sourceFile, setSourceFile] = useState<Blob | undefined>();
   const [session, setSession] = useState<PresentationSession | null>(readSessionState());
   const [now, setNow] = useState(() => Date.now());
+  const [isStageFullscreen, setIsStageFullscreen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   const [peerId, setPeerId] = useState<string | null>(null);
@@ -34,6 +37,7 @@ export function PresenterPage() {
   const [remoteLink, setRemoteLink] = useState<string | null>(null);
   const syncRef = useRef<PresentationSyncChannel | null>(null);
   const remoteServerRef = useRef<PresenterRemoteServer | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     syncRef.current = new PresentationSyncChannel();
@@ -44,13 +48,13 @@ export function PresenterPage() {
     async function loadActiveDeck() {
       const deckId = getActiveDeckId();
       if (!deckId) {
-        setError("No active deck. Import a PDF or PPTX first.");
+        setError(t("presenter.noActiveDeck"));
         return;
       }
 
       const record = await loadDeck(deckId);
       if (!record) {
-        setError("Deck not found in local storage.");
+        setError(t("presenter.missingDeck"));
         return;
       }
 
@@ -60,7 +64,7 @@ export function PresenterPage() {
     }
 
     loadActiveDeck();
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!session) {
@@ -86,6 +90,15 @@ export function PresenterPage() {
     }, 1000);
 
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    function onFullscreenChange() {
+      setIsStageFullscreen(document.fullscreenElement === stageRef.current);
+    }
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
   function goToSlide(index: number) {
@@ -188,7 +201,7 @@ export function PresenterPage() {
         title: deck.title,
       });
     } catch (remoteError) {
-      setError(remoteError instanceof Error ? remoteError.message : "Remote setup failed");
+      setError(remoteError instanceof Error ? remoteError.message : t("presenter.remoteSetupFailed"));
     }
   }
 
@@ -251,9 +264,9 @@ export function PresenterPage() {
   if (!deck || !session) {
     return (
       <section className="panel">
-        <p className="status-card warning">{error ?? "Loading presenter console..."}</p>
+        <p className="status-card warning">{error ?? t("presenter.loading")}</p>
         <Link className="primary-button" to="/import">
-          Go to import
+          {t("presenter.goImport")}
         </Link>
       </section>
     );
@@ -270,21 +283,28 @@ export function PresenterPage() {
           <div className="stage-header">
             <div>
               <p className="eyebrow">{deck.title}</p>
-              <h2>Presenter console</h2>
+              <h2>{t("presenter.title")}</h2>
             </div>
             <div className="button-row">
               <button className="ghost-button" onClick={openAudienceWindow} type="button">
-                Open audience window
+                {t("presenter.openAudience")}
               </button>
               <button
                 className="ghost-button"
-                onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)}
+                onClick={() => {
+                  if (document.fullscreenElement === stageRef.current) {
+                    document.exitFullscreen().catch(() => undefined);
+                    return;
+                  }
+
+                  stageRef.current?.requestFullscreen().catch(() => undefined);
+                }}
                 type="button"
               >
-                Single-screen fullscreen
+                {isStageFullscreen ? t("presenter.exitFullscreen") : t("presenter.enterFullscreen")}
               </button>
               <button className="primary-button" onClick={startRemotePairing} type="button">
-                Pair phone remote
+                {t("presenter.pairRemote")}
               </button>
             </div>
           </div>
@@ -297,8 +317,8 @@ export function PresenterPage() {
               ))}
             </div>
           ) : null}
-          <div className="stage-card">
-            {session.blackout ? <div className="blackout-stage">Blackout enabled</div> : null}
+          <div className="stage-card" ref={stageRef}>
+            {session.blackout ? <div className="blackout-stage">{t("presenter.blackoutEnabled")}</div> : null}
             <SlideViewport deck={deck} file={sourceFile} slide={currentSlide} />
           </div>
         </article>
@@ -306,20 +326,23 @@ export function PresenterPage() {
         <aside className="panel sidebar-panel">
           <div className="metric-grid">
             <div className="metric-card">
-              <span>Slide</span>
+              <span>{t("presenter.slide")}</span>
               <strong>
                 {session.currentSlide + 1}/{deck.totalSlides}
               </strong>
             </div>
             <div className="metric-card">
-              <span>Elapsed</span>
+              <span>{t("presenter.elapsed")}</span>
               <strong>
-                {Math.floor(elapsedSeconds / 60)}m {elapsedSeconds % 60}s
+                {t("presenter.elapsedValue", {
+                  minutes: Math.floor(elapsedSeconds / 60),
+                  seconds: elapsedSeconds % 60,
+                })}
               </strong>
             </div>
             <div className="metric-card">
-              <span>Remote</span>
-              <strong>{session.connectedRemote.length || 0} connected</strong>
+              <span>{t("presenter.remote")}</span>
+              <strong>{t("presenter.connected", { count: session.connectedRemote.length || 0 })}</strong>
             </div>
           </div>
 
@@ -330,7 +353,7 @@ export function PresenterPage() {
               onClick={() => goToSlide(Math.max(0, session.currentSlide - 1))}
               type="button"
             >
-              Previous
+              {t("presenter.previous")}
             </button>
             <button
               className="ghost-button"
@@ -338,7 +361,7 @@ export function PresenterPage() {
               onClick={() => goToSlide(Math.min(deck.totalSlides - 1, session.currentSlide + 1))}
               type="button"
             >
-              Next
+              {t("presenter.next")}
             </button>
             <button
               className={session.blackout ? "primary-button danger" : "ghost-button"}
@@ -350,19 +373,19 @@ export function PresenterPage() {
               }
               type="button"
             >
-              {session.blackout ? "Disable blackout" : "Enable blackout"}
+              {session.blackout ? t("presenter.disableBlackout") : t("presenter.enableBlackout")}
             </button>
           </div>
 
           <div className="notes-card">
-            <p className="eyebrow">Current Notes</p>
-            <h3>{currentSlide.notes ? "Speaker notes available" : "No notes on this slide"}</h3>
-            <p>{currentSlide.notes ?? "PDF decks do not expose speaker notes in v1."}</p>
+            <p className="eyebrow">{t("presenter.notesEyebrow")}</p>
+            <h3>{currentSlide.notes ? t("presenter.notesAvailable") : t("presenter.notesEmptyTitle")}</h3>
+            <p>{currentSlide.notes ?? t("presenter.notesEmptyBody")}</p>
           </div>
 
           {nextSlide ? (
             <div className="preview-card">
-              <p className="eyebrow">Next Slide</p>
+              <p className="eyebrow">{t("presenter.nextSlide")}</p>
               <SlideViewport className="preview-frame" deck={deck} file={sourceFile} slide={nextSlide} />
             </div>
           ) : null}
@@ -375,7 +398,7 @@ export function PresenterPage() {
             }}
             type="button"
           >
-            Reset session
+            {t("presenter.resetSession")}
           </button>
         </aside>
       </section>

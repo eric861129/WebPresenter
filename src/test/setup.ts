@@ -1,5 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import "fake-indexeddb/auto";
+import { beforeEach } from "vitest";
+
+import i18n from "../i18n";
 
 if (
   !("localStorage" in globalThis) ||
@@ -23,3 +26,8 @@ if (
     configurable: true,
   });
 }
+
+beforeEach(async () => {
+  globalThis.localStorage.clear();
+  await i18n.changeLanguage("en");
+});

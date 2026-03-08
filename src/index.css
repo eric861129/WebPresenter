@@ -104,6 +104,14 @@ button {
   flex-wrap: wrap;
 }
 
+.nav-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .nav-link,
 .ghost-button,
 .primary-button {
@@ -134,6 +142,10 @@ button {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.audience-shell {
+  min-height: 100vh;
 }
 
 .panel {
@@ -253,6 +265,20 @@ button {
   padding: 18px;
 }
 
+.stage-card:fullscreen {
+  min-height: 100vh;
+  padding: 0;
+  border-radius: 0;
+  background: #000;
+}
+
+.stage-card:fullscreen .slide-frame {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  border-radius: 0;
+}
+
 .slide-frame {
   position: relative;
   width: 100%;
@@ -353,14 +379,22 @@ button {
 
 .audience-screen {
   position: relative;
-  min-height: calc(100vh - 160px);
+  min-height: 100vh;
   display: grid;
   place-items: center;
+  padding: 18px;
 }
 
 .audience-screen .slide-frame {
   width: min(96vw, 1480px);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+}
+
+.audience-toolbar {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 4;
 }
 
 .audience-blackout {
