@@ -41,6 +41,11 @@ export async function getAllDeckRecords() {
   return db.getAll("decks");
 }
 
+export async function clearDeckRecords() {
+  const db = await dbPromise;
+  await db.clear("decks");
+}
+
 export async function setPreference<T>(key: string, value: T) {
   const db = await dbPromise;
   await db.put("prefs", value, key);

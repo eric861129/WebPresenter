@@ -23,7 +23,6 @@ export function RemotePage() {
     totalSlides: 0,
     title: "",
   });
-  const [gotoValue, setGotoValue] = useState("");
 
   useEffect(() => {
     const incomingPeerId = searchParams.get("peerId");
@@ -90,20 +89,12 @@ export function RemotePage() {
         <p className={connected ? "status-card success" : "status-card"}>
           {connected ? t("remote.connected") : t("remote.waiting")}
         </p>
-        <div className="metric-grid remote-metrics">
-          <div className="metric-card">
-            <span>{t("remote.slide")}</span>
-            <strong>{session ? `${session.currentSlide + 1}/${syncState.totalSlides}` : "--"}</strong>
-          </div>
-          <div className="metric-card">
-            <span>{t("remote.blackout")}</span>
-            <strong>{session?.blackout ? t("remote.blackoutOn") : t("remote.blackoutOff")}</strong>
-          </div>
-          <div className="metric-card">
-            <span>{t("remote.status")}</span>
-            <strong>{connected ? t("remote.live") : t("remote.idle")}</strong>
-          </div>
-        </div>
+        {session ? (
+          <p className="status-card">
+            {t("remote.slide")} {session.currentSlide + 1}/{syncState.totalSlides} · {t("remote.blackout")}{" "}
+            {session.blackout ? t("remote.blackoutOn") : t("remote.blackoutOff")}
+          </p>
+        ) : null}
         <div className="remote-controls">
           <button className="ghost-button remote-button" onClick={() => send({ type: "PREV" })} type="button">
             {t("remote.previous")}
@@ -115,27 +106,6 @@ export function RemotePage() {
             {t("remote.toggleBlackout")}
           </button>
         </div>
-        <form
-          className="goto-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const nextIndex = Number(gotoValue) - 1;
-            if (!Number.isNaN(nextIndex)) {
-              send({ type: "GOTO", index: nextIndex });
-            }
-          }}
-        >
-          <input
-            className="text-input"
-            inputMode="numeric"
-            onChange={(event) => setGotoValue(event.target.value)}
-            placeholder={t("remote.jumpPlaceholder")}
-            value={gotoValue}
-          />
-          <button className="ghost-button" type="submit">
-            {t("common.go")}
-          </button>
-        </form>
       </article>
 
       <article className="panel notes-panel">

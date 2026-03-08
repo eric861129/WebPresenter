@@ -1,4 +1,4 @@
-import { getAllDeckRecords, getDeckRecord, saveDeckRecord } from "./database";
+import { clearDeckRecords, getAllDeckRecords, getDeckRecord, saveDeckRecord } from "./database";
 import type { DeckDocument, DeckRecordSummary } from "../types";
 
 const ACTIVE_DECK_KEY = "webpresenter.activeDeckId";
@@ -35,4 +35,9 @@ export function setActiveDeckId(deckId: string) {
 
 export function getActiveDeckId() {
   return localStorage.getItem(ACTIVE_DECK_KEY);
+}
+
+export async function clearStoredDecks() {
+  await clearDeckRecords();
+  localStorage.removeItem(ACTIVE_DECK_KEY);
 }

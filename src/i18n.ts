@@ -7,8 +7,7 @@ const resources = {
     translation: {
       shell: {
         subtitle: "Browser-first presentation control room",
-        languageZh: "中文",
-        languageEn: "EN",
+        toggleLanguage: "中文",
         nav: {
           import: "Import Deck",
           presenter: "Presenter",
@@ -27,6 +26,7 @@ const resources = {
         uploadHint: "Drop a deck or click to choose",
         uploadIdle: "Select .pdf or .pptx",
         uploadLoading: "Importing...",
+        clearDecks: "Clear stored files",
         recentEyebrow: "Recent Decks",
         recentTitle: "Jump back into rehearsal",
         empty: "No deck imported yet.",
@@ -100,8 +100,7 @@ const resources = {
     translation: {
       shell: {
         subtitle: "以瀏覽器為核心的簡報控制中心",
-        languageZh: "中文",
-        languageEn: "EN",
+        toggleLanguage: "EN",
         nav: {
           import: "匯入簡報",
           presenter: "主控台",
@@ -120,6 +119,7 @@ const resources = {
         uploadHint: "拖曳簡報進來，或點擊選擇檔案",
         uploadIdle: "選擇 .pdf 或 .pptx",
         uploadLoading: "匯入中...",
+        clearDecks: "清除已匯入檔案",
         recentEyebrow: "最近簡報",
         recentTitle: "快速回到上次彩排",
         empty: "目前還沒有匯入任何簡報。",

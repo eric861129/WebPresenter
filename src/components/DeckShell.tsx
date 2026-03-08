@@ -39,22 +39,13 @@ export function DeckShell() {
               </Link>
             ))}
           </nav>
-          <div className="nav-links">
-            <button
-              className={i18n.language === "zh-TW" ? "nav-link active" : "nav-link"}
-              onClick={() => i18n.changeLanguage("zh-TW")}
-              type="button"
-            >
-              {t("shell.languageZh")}
-            </button>
-            <button
-              className={i18n.language.startsWith("en") ? "nav-link active" : "nav-link"}
-              onClick={() => i18n.changeLanguage("en")}
-              type="button"
-            >
-              {t("shell.languageEn")}
-            </button>
-          </div>
+          <button
+            className="nav-link"
+            onClick={() => i18n.changeLanguage(i18n.language.startsWith("en") ? "zh-TW" : "en")}
+            type="button"
+          >
+            {t("shell.toggleLanguage")}
+          </button>
         </div>
       </header>
       <main className="main-shell">

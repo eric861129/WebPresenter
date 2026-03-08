@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 import { importDeckFromFile } from "../services/deckImport";
-import { loadRecentDecks, persistDeck, setActiveDeckId } from "../services/deckStore";
+import { clearStoredDecks, loadRecentDecks, persistDeck, setActiveDeckId } from "../services/deckStore";
+import { clearSessionState } from "../services/sessionState";
 import type { DeckRecordSummary } from "../types";
 
 export function ImportPage() {
@@ -39,6 +40,13 @@ export function ImportPage() {
     }
   }
 
+  async function handleClearDecks() {
+    await clearStoredDecks();
+    clearSessionState();
+    setRecentDecks([]);
+    setError(null);
+  }
+
   return (
     <section className="import-grid">
       <article className="panel hero-panel">
@@ -50,6 +58,11 @@ export function ImportPage() {
           <strong>{loading ? t("import.uploadLoading") : t("import.uploadIdle")}</strong>
           <input accept=".pdf,.pptx" hidden onChange={handleImport} type="file" />
         </label>
+        <div className="button-row import-actions">
+          <button className="ghost-button" onClick={handleClearDecks} type="button">
+            {t("import.clearDecks")}
+          </button>
+        </div>
         {error ? <p className="status-card warning">{error}</p> : null}
       </article>
 
