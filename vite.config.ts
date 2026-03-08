@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["vite.svg"],
+      includeAssets: ["webpresenter-logo.svg"],
       manifest: {
         name: "WebPresenter",
         short_name: "WebPresenter",
@@ -19,7 +19,7 @@ export default defineConfig({
         start_url: "/WebPresenter/#/remote",
         icons: [
           {
-            src: "vite.svg",
+            src: "webpresenter-logo.svg",
             sizes: "192x192",
             type: "image/svg+xml",
           },
