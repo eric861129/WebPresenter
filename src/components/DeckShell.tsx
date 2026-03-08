@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 export function DeckShell() {
   const location = useLocation();
   const { i18n, t } = useTranslation();
+  const audienceUrl = `${window.location.origin}${window.location.pathname}#/audience`;
 
   const links = [
     { to: "/import", label: t("shell.nav.import") },
@@ -30,13 +31,24 @@ export function DeckShell() {
         <div className="nav-group">
           <nav className="nav-links">
             {links.map((link) => (
-              <Link
-                key={link.to}
-                className={location.pathname === link.to ? "nav-link active" : "nav-link"}
-                to={link.to}
-              >
-                {link.label}
-              </Link>
+              link.to === "/audience" ? (
+                <button
+                  key={link.to}
+                  className="nav-link"
+                  onClick={() => window.open(audienceUrl, "webpresenter-audience")}
+                  type="button"
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.to}
+                  className={location.pathname === link.to ? "nav-link active" : "nav-link"}
+                  to={link.to}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </nav>
           <button
