@@ -7,21 +7,15 @@ import { SlideViewport } from "../components/SlideViewport";
 import { buildQrCodeDataUrl } from "../services/qrCode";
 import { buildRemoteLink, PresenterRemoteServer } from "../services/remoteControl";
 import { getActiveDeckId, loadDeck } from "../services/deckStore";
-import { clearSessionState, readSessionState, writeSessionState } from "../services/sessionState";
+import {
+  clearSessionState,
+  createPresentationSession,
+  readSessionState,
+  validateSessionForDeck,
+  writeSessionState,
+} from "../services/sessionState";
 import { PresentationSyncChannel } from "../services/syncChannel";
-import type { DeckDocument, PresentationMode, PresentationSession, RemoteCommand } from "../types";
-
-function createSession(deckId: string, mode: PresentationMode): PresentationSession {
-  return {
-    sessionId: crypto.randomUUID(),
-    deckId,
-    currentSlide: 0,
-    blackout: false,
-    mode,
-    connectedRemote: [],
-    startedAt: Date.now(),
-  };
-}
+import type { DeckDocument, PresentationSession, RemoteCommand } from "../types";
 
 export function PresenterPage() {
   const { t } = useTranslation();
@@ -63,7 +57,9 @@ export function PresenterPage() {
       setDeck(record.deck);
       deckRef.current = record.deck;
       setSourceFile(record.file);
-      setSession((currentSession) => currentSession ?? createSession(record.deck.id, "single"));
+      setSession((currentSession) => {
+        return validateSessionForDeck(currentSession, record.deck) ?? createPresentationSession(record.deck.id, "single");
+      });
     }
 
     loadActiveDeck();
@@ -241,6 +237,11 @@ export function PresenterPage() {
         title: deck.title,
       });
     } catch (remoteError) {
+      remoteServer.stop();
+      remoteServerRef.current = null;
+      setPeerId(null);
+      setRemoteLink(null);
+      setQrDataUrl(null);
       setError(remoteError instanceof Error ? remoteError.message : t("presenter.remoteSetupFailed"));
     }
   }
@@ -250,7 +251,13 @@ export function PresenterPage() {
       return;
     }
 
-    const nextSession = createSession(deck.id, "dual");
+    const currentSession = validateSessionForDeck(sessionRef.current, deck);
+    const nextSession = currentSession
+      ? {
+          ...currentSession,
+          mode: "dual" as const,
+        }
+      : createPresentationSession(deck.id, "dual");
     setSession(nextSession);
     writeSessionState(nextSession);
     window.open(`${window.location.origin}${window.location.pathname}#/audience`, "webpresenter-audience");
@@ -420,7 +427,7 @@ export function PresenterPage() {
             className="ghost-button"
             onClick={() => {
               clearSessionState();
-              setSession(createSession(deck.id, "single"));
+              setSession(createPresentationSession(deck.id, "single"));
             }}
             type="button"
           >

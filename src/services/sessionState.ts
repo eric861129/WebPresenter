@@ -1,6 +1,36 @@
-import type { PresentationSession } from "../types";
+import type { DeckDocument, PresentationMode, PresentationSession } from "../types";
 
 const ACTIVE_SESSION_KEY = "webpresenter.activeSession";
+
+export function createPresentationSession(deckId: string, mode: PresentationMode): PresentationSession {
+  return {
+    sessionId: crypto.randomUUID(),
+    deckId,
+    currentSlide: 0,
+    blackout: false,
+    mode,
+    connectedRemote: [],
+    startedAt: Date.now(),
+  };
+}
+
+export function validateSessionForDeck(session: PresentationSession | null, deck: DeckDocument) {
+  if (!session || session.deckId !== deck.id) {
+    return null;
+  }
+
+  const maxSlideIndex = Math.max(deck.totalSlides - 1, 0);
+  const currentSlide = Math.min(maxSlideIndex, Math.max(0, session.currentSlide));
+
+  if (currentSlide === session.currentSlide) {
+    return session;
+  }
+
+  return {
+    ...session,
+    currentSlide,
+  };
+}
 
 export function readSessionState() {
   const raw = localStorage.getItem(ACTIVE_SESSION_KEY);

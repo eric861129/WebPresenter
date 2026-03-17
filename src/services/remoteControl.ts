@@ -85,6 +85,8 @@ export class MobileRemoteClient {
   private peer: Peer | null = null;
   private connection: DataConnection | null = null;
   private retryTimer: number | null = null;
+  private disposed = false;
+  private suppressReconnect = false;
   private options: RemoteClientOptions;
 
   constructor(options: RemoteClientOptions) {
@@ -92,7 +94,17 @@ export class MobileRemoteClient {
   }
 
   connect() {
+    this.disposed = false;
+    this.suppressReconnect = false;
     this.peer = new Peer();
+    this.peer.on("error", () => {
+      if (this.disposed || this.suppressReconnect) {
+        return;
+      }
+
+      this.options.onClose?.();
+      this.scheduleReconnect();
+    });
     this.peer.once("open", () => {
       this.connection = this.peer?.connect(this.options.peerId, {
         reliable: true,
@@ -113,6 +125,19 @@ export class MobileRemoteClient {
       });
 
       this.connection?.on("close", () => {
+        if (this.disposed || this.suppressReconnect) {
+          return;
+        }
+
+        this.options.onClose?.();
+        this.scheduleReconnect();
+      });
+
+      this.connection?.on("error", () => {
+        if (this.disposed || this.suppressReconnect) {
+          return;
+        }
+
         this.options.onClose?.();
         this.scheduleReconnect();
       });
@@ -120,12 +145,21 @@ export class MobileRemoteClient {
   }
 
   private scheduleReconnect() {
+    if (this.disposed || this.suppressReconnect) {
+      return;
+    }
+
     if (this.retryTimer !== null) {
       window.clearTimeout(this.retryTimer);
     }
 
     this.retryTimer = window.setTimeout(() => {
-      this.dispose();
+      this.suppressReconnect = true;
+      this.connection?.close();
+      this.peer?.destroy();
+      this.connection = null;
+      this.peer = null;
+      this.suppressReconnect = false;
       this.connect();
     }, 5000);
   }
@@ -135,14 +169,17 @@ export class MobileRemoteClient {
   }
 
   dispose() {
+    this.disposed = true;
     if (this.retryTimer !== null) {
       window.clearTimeout(this.retryTimer);
       this.retryTimer = null;
     }
+    this.suppressReconnect = true;
     this.connection?.close();
     this.peer?.destroy();
     this.connection = null;
     this.peer = null;
+    this.suppressReconnect = false;
   }
 }
 
